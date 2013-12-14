@@ -4,13 +4,13 @@ library(plyr)
 
 ####
 ####
-data.directory <- "~/work/hackaton/MassDOThack.data"
+data.directory <- "~/code/MassDOThack"
 
 ## MBCR_Rail_Volume
 subdirectory <- "/MBCR_Rail_Volume"
 setwd(sprintf("%s%s", data.directory, subdirectory))
-y11 <- data.table(read.csv("MBCR_Trip_Records_2013.csv"))
-y12 <- data.table(read.csv("MBCR_Trip_Records_2013.csv"))
+y11 <- data.table(read.csv("MBCR_Trip_Records_2011.csv"))
+y12 <- data.table(read.csv("MBCR_Trip_Records_2012.csv"))
 y13 <- data.table(read.csv("MBCR_Trip_Records_2013.csv"))
 
 ## MBCR_Rail_Locations
