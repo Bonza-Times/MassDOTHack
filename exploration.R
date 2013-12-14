@@ -2,6 +2,8 @@
 library(data.table)
 library(plyr)
 
+rm(list=ls(), envir = globalenv())
+
 ####
 ####
 data.directory <- "~/code/MassDOThack"
