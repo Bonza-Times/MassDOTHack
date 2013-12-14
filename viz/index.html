@@ -1,181 +1,73 @@
 <html>
 <head>
 	<title>MassDOT</title>
+	
+	<style>
+		#console {
+			position: absolute;
+			top: 10px;
+			left: 10px;
+			width: 300px;
+			height: 400px;
+		}
+		
+		#time-slider { width: 100%; }
+		
+		#accident_predicter p { margin: 0; display: block; }
+	</style>
 </head>
 <body>
+	<fieldset id="console">
+		<legend>Controls</legend>
+		<p>
+			<label>Time Slider</label><br />
+			<input type="range" id="time-slider" />
+		</p>
+		<p>
+			<ul>
+				<li>Minimum Delay:</li>
+				<li>Maximum Delay</li>
+			</ul>
+		</p>
+		<p>
+			<input type="checkbox" id="commuter-rail" checked>
+			<label for="commuter-rail">Show Commuter Rail</label>
+			<input type="checkbox" id="highway" checked>
+			<label for="highway">Show Highway</label>
+		</p>
+		
+		<label>Accident Severity Predictor</label>
+		<div id="accident_predicter"></div>
+		<div id="results">Training Network, please wait...</div>
+	</fieldset>
 	
-	<div id="stations-map"></div>
+	<div id="map"></div>
 	
+	<script src="bower_components/jquery/jquery.min.js"></script>
 	<script src="bower_components/lodash/dist/lodash.min.js"></script>
 	<script src="bower_components/d3/d3.min.js"></script>
+	<script src="vendor/brain.js"></script>
+	<script src="js/commuter_rail.js"></script>
+	<script src="js/highway.js"></script>
+	<script src="js/dashboard.js"></script>
+	<script src="js/accident-severity.js"></script>
+	
 	<script>
 		var projection, svg;
-		
-		var forEach = Array.prototype.forEach;
 		
 		var center = [ 24.7, 42.7 ];
 		var scale = 68070;
 		projection = d3.geo.albers().center(center).scale(scale);
 
-		svg = d3.select("#stations-map").append("svg").attr("width", 1200)
-				.attr("class", "map").attr("height", 1900);
+		svg = d3.select("#map")
+			.append("svg")
+			.attr("width", 1200)
+			.attr("class", "map")
+			.attr("height", 1900);
 
-		d3.csv("data/StationOrder.csv", function(d) {
-			return {
-				route : d.route_long_name,
-				id : d.stop_id,
-				dir : d.direction_id,
-				stop : d.stop_sequence,
-				branch : d.Branch,
-				lat : d.stop_lat,
-				lon : d.stop_lon
-			};
-		}, function(error, stops) {
-			var circle_radius, color, lines, routes, unique_stations;
-			
-			circle_radius = 4;
-			color = d3.scale.category20();
-			lines = [];
-			
-			routes = _.pluck(_.uniq(stops, "route"), "route");
-			routes.forEach(function(route) {
-				var line = {};
-				var raw_line = _.filter(stops, { "route": route });
-				line.outbound = _.filter(raw_line, { "dir": "0" });
-				line.inbound = _.filter(raw_line, { "dir": "1" });
-				lines.push(line);
-			});
-			
-			var rails = (function() {
-				var direction, rail, rails = [];
-				
-				//Primary Branch Only
-				lines.forEach(function(line) {
-					var inbound = line.inbound;
-					for(i in inbound) {
-						rail = {};
-						i = parseInt(i);
-						direction = inbound[i].dir;
-						branch = inbound[i].branch;
-						
-						if(inbound[i+1]) {
-							if(inbound[i+1].dir === direction) {
-								rail.start = inbound[i];
-								rail.end = inbound[i+1];
-								
-								rail.start.projection = projection([rail.start.lon, rail.start.lat]);
-								rail.end.projection = projection([rail.end.lon, rail.end.lat]);
-								
-								rail.theta = calculateTheta(rail);
-								rails.push(rail);
-							}
-						}
-					}
-					
-					var outbound = line.outbound;
-					for(i in outbound) {
-						rail = {};
-						i = parseInt(i);
-						direction = outbound[i].dir;
-						branch = outbound[i].branch;
-						
-						if(outbound[i+1]) {
-							if(outbound[i+1].dir === direction) {
-								rail.start = outbound[i];
-								rail.end = outbound[i+1];
-								
-								rail.start.projection = projection([rail.start.lon, rail.start.lat]);
-								rail.end.projection = projection([rail.end.lon, rail.end.lat]);
-								
-								rail.theta = calculateTheta(rail);
-								rails.push(rail);
-							}
-						}
-					}
-				});
-				
-				function calculateTheta(rail) {
-					var delta_x = rail.start.projection[0] - rail.end.projection[0];
-					var delta_y = rail.start.projection[1] - rail.end.projection[1];
-					return Math.atan2(delta_x, delta_y) * 180 / Math.PI;
-				}
-				
-				return rails; 
-			})();
-			
-			svg.selectAll("line.rails")
-				.data(rails)
-				.enter()
-				.append("line")
-				.style("stroke-dasharray", function(d) {
-					 if(d.start.branch !== d.end.branch) {
-						return ("3, 3")
-					 }
-				})
-				.style("stroke-width", 1.25)
-				.attr("x1", function(d) {
-					var offset = Math.sin(d.theta) * (0.8*circle_radius);
-					return d.start.projection[0] + offset; 
-					})
-				.attr("y1", function(d) {
-					var offset = Math.cos(d.theta) * (0.8*circle_radius);
-					return d.start.projection[1] + offset;
-					})
-				.attr("x2", function(d) {
-					var offset = Math.sin(d.theta) * (0.8*circle_radius);
-					return d.end.projection[0] + offset;
-					})
-				.attr("y2", function(d) {
-					var offset = Math.cos(d.theta) * (0.8*circle_radius);
-					return d.end.projection[1] + offset
-					})
-				.style("stroke", function(d) {
-					return color(routes.indexOf(d.start.route));
-				});
-				
-				unique_stations = _.uniq(stops, "id");
-				svg.selectAll("circles.stations")
-					.data(unique_stations)
-					.enter()
-					.append("circle")
-					.attr("r", circle_radius)
-					.attr("transform", function(d) {
-						return "translate(" + projection([ d.lon, d.lat ]) + ")";
-					}).on("mouseover", function(d) {
-						console.log(d);
-					});
-		});
-		
-		var lineFunction = d3.svg.line()
-							.x(function(d) { return d.x; })
-							.y(function(d) { return d.y; })
-							.interpolate("linear");
-
-		d3.xml("data/pair_routes.xml", function(xml) {
-			var pairDataNodes = xml.documentElement.getElementsByTagName("PAIRDATA");
-			var lineData;
-			
-			forEach.call(pairDataNodes, function(node) {
-				lineData = [];
-				var routes = node.getElementsByTagName("Route");
-				
-				forEach.call(routes, function(route) {
-					var lat = route.getElementsByTagName("lat")[0].childNodes[0].nodeValue;
-					var lng = route.getElementsByTagName("lon")[0].childNodes[0].nodeValue;
-					var road_projection = projection([lng,lat]);
-					lineData.push({ 
-						"x": road_projection[0],
-						"y": road_projection[1]
-					});
-				});
-				
-				svg.append("path")
-					.attr("d", lineFunction(lineData))
-					.attr("stroke", "#333")
-					.attr("stroke-width", 4)
-					.attr("fill", "none");
-			});
-		});
+		loadCommuterRailViz();
+		loadHighwayViz();
+		accidentSeverity();
 	</script>
 </body>
 </html>
