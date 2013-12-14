@@ -6,7 +6,7 @@ rm(list=ls(), envir = globalenv())
 
 ####
 ####
-data.directory <- "~/work/hackaton/MassDOThack.data"
+data.directory <- "~/code/MassDOThack"
 
 ## MBCR_Rail_Volume
 subdirectory <- "/MBCR_Rail_Volume"
