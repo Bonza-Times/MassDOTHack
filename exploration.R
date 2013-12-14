@@ -1,6 +1,8 @@
 
 library(data.table)
 library(plyr)
+library(rjson)
+library(reshape)
 
 #rm(list=ls(), envir = globalenv())
 
@@ -106,25 +108,128 @@ aaa <- data.table(ldply(line.names.vec, function(line.name){
   return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
 }))
 
-function(date.target, time.target)
-  
+
 date.target <- c("10/22/2013")
-time.target <- c("4:00 PM") 
+time.target <- c("16:00")
 timestamp.target <- as.POSIXct(strptime(
-  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %I:%M %p"))
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+  
+
+get.passanger.df <- function(date.target, time.target){
+  timestamp.target <- as.POSIXct(strptime(
+    sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+  line.names.vec <- unique(summary.y13$Route)
+  aaa <- data.table(ldply(line.names.vec, function(line.name){
+    target.df <- summary.y13[Route==line.name,]
+    indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) >= 0) & 
+                        (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) <= 0 ))
+    return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
+  }))
+  return(aaa)
+}
+
+date.target <- c("10/22/2013")
+time.target <- c("16:00")
+get.passanger.df(date.target, time.target)
+
+get.passanger.timestamps.df <- function(timestamp.target){
+  line.names.vec <- unique(summary.y13$Route)
+  aaa <- data.table(ldply(line.names.vec, function(line.name){
+    target.df <- summary.y13[Route==line.name,]
+    indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) >= 0) & 
+                        (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) <= 0 ))
+    return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
+  }))
+  return(aaa)
+}
 
 
-line.names.vec <- unique(summary.y13$Route)
-aaa <- data.table(ldply(line.names.vec, function(line.name){
-  line.name <- c("Stoughton Branch")
-  target.df <- summary.y13[Route==line.name,]
-  indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) >= 0) & 
-                      (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) <= 0 ))
-  return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
-}))
+timestampToUnix <- function(timestamp.ttt){
+  date.target <- c("1/1/1970")
+  time.target <- c("00:00")
+  timestamp.aux<- as.POSIXct(strptime(
+    sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+  
+  res <- as.double(difftime(timestamp.ttt, timestamp.aux, units="secs"))
+  return(res)
+}
 
 
-      
+date.target <- c("11/04/2012")
+time.target <- c("22:32")
+timestamp.ttt <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+#2012-11-04 22:32:00
+#timestampToUnix(timestamp.ttt)
+
+
+date.target <- c("1/1/2013")
+time.target <- c("00:00")
+timestamp.target.init <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+date.target <- c("1/3/2013")
+time.target <- c("24:00")
+timestamp.target.final <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+
+increment.time <- as.difftime(60, units="mins")
+
+timestamp.target <- timestamp.target.init
+res.final.df <- data.frame()
+while(timestamp.target < timestamp.target.final){
+  res.df <- get.passanger.timestamps.df(timestamp.target)
+  n_sec <- timestampToUnix(timestamp.target)
+  res.df$unix_time <- n_sec
+  res.df$time <- timestamp.target
+  res.final.df <- rbind(res.final.df, cast(res.df, unix_time ~ Route , mean, value='n_passenger'))
+  timestamp.target <- timestamp.target + increment.time
+}
+
+##############
+##############
+
+
+date.target <- c("10/7/2013")
+time.target <- c("00:00")
+timestamp.target.init <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+date.target <- c("10/13/2013")
+time.target <- c("24:00")
+timestamp.target.final <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M"))
+
+
+increment.time <- as.difftime(60, units="mins")
+
+timestamp.target <- timestamp.target.init
+res.final.df <- data.frame()
+while(timestamp.target < timestamp.target.final){
+  print(timestamp.target)
+  timestamp.aux <- timestamp.target
+  timestamp.aux.final <-  timestamp.target + increment.time
+  res.aux.df <- data.frame()
+  while(timestamp.aux < timestamp.aux.final){
+    res.df <- get.passanger.timestamps.df(timestamp.aux)
+    n_sec <- timestampToUnix(timestamp.target)
+    res.df$unix_time <- n_sec
+    res.aux.df <- rbind(res.aux.df, res.df)
+    timestamp.aux <- timestamp.aux + increment.time/4
+  }
+  res.final.df <- rbind(res.final.df, cast(res.aux.df, unix_time ~ Route , mean, value='n_passenger'))
+  timestamp.target <- timestamp.target + increment.time
+}
+
+
+data.directory <- "~/work/hackaton/MassDOThack"
+subdirectory <- ""
+setwd(sprintf("%s%s", data.directory, subdirectory))
+write.csv(res.final.df, file="passengers.lines.csv")
       
       
       
