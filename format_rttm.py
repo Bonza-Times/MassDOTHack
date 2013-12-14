@@ -26,3 +26,9 @@ except MySQLdb.Error, e:
 Going to just visualize using the API. If that's working then I'll convert
 the raw data to give us more insight.
 """
+url = 'http://www.massdot.state.ma.us/feeds/traveltimes/RTTM_feed.aspx'
+
+from xml.dom import minidom
+xmldoc = minidom.parse(url)
+itemList = xmldoc.getElementsByTagName('PairID')
+len(itemList)
