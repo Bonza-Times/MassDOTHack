@@ -60,28 +60,65 @@ summary.y13 <- mutate(summary.y13,
                                     sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
                                     "%m/%d/%Y %H:%M:%S %p")),
                       cSchArvTm = as.POSIXct(strptime(
-                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
+                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchArvTm), 
                                     "%m/%d/%Y %H:%M:%S %p")),
                       cActDptTm = as.POSIXct(strptime(
-                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
+                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cActDptTm), 
                                     "%m/%d/%Y %H:%M:%S %p")),
                       cActArvTm = as.POSIXct(strptime(
-                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
+                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cActArvTm), 
                                     "%m/%d/%Y %H:%M:%S %p")),
                       delay = cSchArvTm - cActArvTm)
 
-        as.POSIXct(strptime(
-              sprintf("%s %s", summary.y13$tTrip[1], summary.y13$cSchDptTm[1]), 
-              "%m/%d/%Y %H:%M:%S %p"))
+#        as.POSIXct(strptime(
+#sprintf("%s %s", summary.y13$tTrip[1], summary.y13$cSchDptTm[1]), 
+#              "%m/%d/%Y %H:%M:%S %p"))
            
-with(summary.y13, as.POSIXct(sprintf("%s %s", tTrip[1], cSchDptTm[1])))                
-for (i in 1:length(summary.y13$cSchDptTm)){
-  print(i)
-  as.POSIXct(summary.y13$cSchDptTm)
-}
+#with(summary.y13, as.POSIXct(sprintf("%s %s", tTrip[1], cSchDptTm[1])))                
+#for (i in 1:length(summary.y13$cSchDptTm)){
+#  print(i)
+#as.POSIXct(summary.y13$cSchDptTm)
+#}
 
 all.locations1.vec <- unique(summary.y13$ActualDepartureLocation)
 all.locations2.vec <- unique(summary.y13$ActualArrivalLocation)
 all.locations.vec <- union(all.locations1.vec, all.locations2.vec)
+
+date.target <- c("11/15/2013")
+time.target <- c("12:10:00 PM") 
+timestamp.target <- as.POSIXct(strptime(
+      sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M:%S %p"))
+
+#upper.t.target <- timestamp.target + 1
+#which(summary.y13$cSchArvTm > timestamp.target)
+#which(as.double(difftime(timestamp.target, summary.y13$cSchDptTm, units="mins") ) < 10)
+
+time.mins.interval <- 10
+line.names.vec <- unique(summary.y13$Route)
+ldply(line.names.vec, function(line.name){
+  target.df <- summary.y13[Route==line.name,]
+  indexes <- which( (target.df$cActDptTm > timestamp.target) && (target.df$cActArvTm < timestamp.target))
+  
+}
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+
+
+
+
 
 
