@@ -20,14 +20,15 @@
 	<fieldset id="console">
 		<legend>Controls</legend>
 		<p>
-			<label>Time Slider</label><br />
-			<input type="range" id="time-slider" />
-		</p>
-		<p>
-			<ul>
-				<li>Minimum Delay:</li>
-				<li>Maximum Delay</li>
-			</ul>
+			<label>Time Slider: <span class="date">[use slider to get date]</span></label><br />
+			<input 
+				min="1381100400" 
+				max="1381701600"
+				step="3600"
+				value="1381100400"
+				type="range"
+				id="time-slider" 
+			/>
 		</p>
 		<p>
 			<input type="checkbox" id="commuter-rail" checked>
@@ -49,6 +50,7 @@
 	<script src="vendor/brain.js"></script>
 	<script src="js/commuter_rail.js"></script>
 	<script src="js/highway.js"></script>
+	<script src="js/time-series.js"></script>
 	<script src="js/dashboard.js"></script>
 	<script src="js/accident-severity.js"></script>
 	
@@ -65,8 +67,9 @@
 			.attr("class", "map")
 			.attr("height", 1900);
 
-		loadCommuterRailViz();
 		loadHighwayViz();
+		loadCommuterRailViz();
+		loadTimeSeries();
 		accidentSeverity();
 	</script>
 </body>
