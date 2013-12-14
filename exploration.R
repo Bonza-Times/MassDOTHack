@@ -2,11 +2,11 @@
 library(data.table)
 library(plyr)
 
-rm(list=ls(), envir = globalenv())
+#rm(list=ls(), envir = globalenv())
 
 ####
 ####
-data.directory <- "~/code/MassDOThack"
+data.directory <- "~/work/hackaton/MassDOThack.data"
 
 ## MBCR_Rail_Volume
 subdirectory <- "/MBCR_Rail_Volume"
@@ -58,16 +58,16 @@ summary.y13 <- y13[ , c(
 summary.y13 <- mutate(summary.y13, 
                       cSchDptTm = as.POSIXct(strptime(
                                     sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       cSchArvTm = as.POSIXct(strptime(
                                     sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchArvTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       cActDptTm = as.POSIXct(strptime(
                                     sprintf("%s %s", summary.y13$tTrip, summary.y13$cActDptTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       cActArvTm = as.POSIXct(strptime(
                                     sprintf("%s %s", summary.y13$tTrip, summary.y13$cActArvTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       delay = cSchArvTm - cActArvTm)
 
 #        as.POSIXct(strptime(
@@ -84,28 +84,46 @@ all.locations1.vec <- unique(summary.y13$ActualDepartureLocation)
 all.locations2.vec <- unique(summary.y13$ActualArrivalLocation)
 all.locations.vec <- union(all.locations1.vec, all.locations2.vec)
 
-date.target <- c("11/15/2013")
-time.target <- c("12:10:00 PM") 
-timestamp.target <- as.POSIXct(strptime(
-      sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M:%S %p"))
+
 
 #upper.t.target <- timestamp.target + 1
 #which(summary.y13$cSchArvTm > timestamp.target)
 #which(as.double(difftime(timestamp.target, summary.y13$cSchDptTm, units="mins") ) < 10)
+#time.mins.interval <- 100
 
-time.mins.interval <- 10
+
+date.target <- c("10/22/2013")
+time.target <- c("9:00 AM") 
+timestamp.target <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M %p"))
+
+
 line.names.vec <- unique(summary.y13$Route)
-ldply(line.names.vec, function(line.name){
+aaa <- data.table(ldply(line.names.vec, function(line.name){
   target.df <- summary.y13[Route==line.name,]
-  indexes <- which( (target.df$cActDptTm > timestamp.target) && (target.df$cActArvTm < timestamp.target))
-  
-}
+  indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) > 0) & 
+                    (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) < 0 ))
+  return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
+}))
 
-      
-      
-      
-      
-      
+function(date.target, time.target)
+  
+date.target <- c("10/22/2013")
+time.target <- c("4:00 PM") 
+timestamp.target <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %I:%M %p"))
+
+
+line.names.vec <- unique(summary.y13$Route)
+aaa <- data.table(ldply(line.names.vec, function(line.name){
+  line.name <- c("Stoughton Branch")
+  target.df <- summary.y13[Route==line.name,]
+  indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) >= 0) & 
+                      (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) <= 0 ))
+  return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
+}))
+
+
       
       
       
