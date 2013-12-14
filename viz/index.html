@@ -1,0 +1,41 @@
+<html>
+<head>
+	<title>MassDOT</title>
+</head>
+<body>
+	
+	<div id="stations-map"></div>
+	
+	<script src="bower_components/d3/d3.min.js"></script>
+	<script>
+		var projection, svg;
+		
+		projection = d3.geo.albers().center([ 24.9, 42.5 ]).scale(45070);
+
+		svg = d3.select("#stations-map").append("svg").attr("width", 900)
+				.attr("class", "map").attr("height", 950);
+
+		d3.csv("data/StationOrder.csv", function(d) {
+			return {
+				route : d.route_long_name,
+				id : d.stop_id,
+				dir : d.direction_id,
+				stop : d.stop_sequence,
+				branch : d.Branch,
+				lat : d.stop_lat,
+				lon : d.stop_lon
+			};
+		}, function(error, rows) {
+			svg.selectAll("circles.points").data(rows).enter().append("circle")
+					.attr("r", 3).attr(
+							"transform",
+							function(d) {
+								return "translate("
+										+ projection([ d.lon, d.lat ]) + ")";
+							}).on("mouseover", function(d) {
+						console.log(d);
+					});
+		});
+	</script>
+</body>
+</html>
