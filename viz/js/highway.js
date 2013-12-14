@@ -28,7 +28,7 @@ function loadHighwayViz() {
 				
 				g.append("path")
 					.attr("d", lineFunction(lineData))
-					.attr("stroke", "#333")
+					.attr("stroke", "#ddd")
 					.attr("stroke-width", 4)
 					.attr("fill", "none");
 			});

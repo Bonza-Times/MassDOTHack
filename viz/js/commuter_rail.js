@@ -112,7 +112,9 @@ function loadCommuterRailViz() {
 					})
 				.style("stroke", function(d) {
 					return color(routes.indexOf(d.start.route));
-				});
+				}).on("mouseover", function(d) {
+						console.log(d);
+					});
 				
 				unique_stations = _.uniq(stops, "id");
 				g.selectAll("circles.stations")

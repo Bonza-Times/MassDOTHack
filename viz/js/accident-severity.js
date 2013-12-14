@@ -4,7 +4,7 @@ function accidentSeverity() {
 		var input_datum;
 		var output_datum;
 		
-		var events_slice = events.splice(0,20);
+		var events_slice = events.splice(0,200);
 		
 		var surfaces = _.pluck(_.uniq(events_slice, "Road Surface"), "Road Surface").sort();
 		$("#accident_predicter").append(createDropDown(surfaces, "surface"));
@@ -79,6 +79,7 @@ function accidentSeverity() {
 					result = i;
 				}
 			}
+			console.log(output);
 			alert("Predicted Accident Severity: " + result.split("_")[1]);
 		});
 	});
