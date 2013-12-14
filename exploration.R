@@ -2,6 +2,8 @@
 library(data.table)
 library(plyr)
 
+#rm(list=ls(), envir = globalenv())
+
 ####
 ####
 data.directory <- "~/work/hackaton/MassDOThack.data"
@@ -9,8 +11,8 @@ data.directory <- "~/work/hackaton/MassDOThack.data"
 ## MBCR_Rail_Volume
 subdirectory <- "/MBCR_Rail_Volume"
 setwd(sprintf("%s%s", data.directory, subdirectory))
-y11 <- data.table(read.csv("MBCR_Trip_Records_2013.csv"))
-y12 <- data.table(read.csv("MBCR_Trip_Records_2013.csv"))
+y11 <- data.table(read.csv("MBCR_Trip_Records_2011.csv"))
+y12 <- data.table(read.csv("MBCR_Trip_Records_2012.csv"))
 y13 <- data.table(read.csv("MBCR_Trip_Records_2013.csv"))
 
 ## MBCR_Rail_Locations
@@ -56,30 +58,85 @@ summary.y13 <- y13[ , c(
 summary.y13 <- mutate(summary.y13, 
                       cSchDptTm = as.POSIXct(strptime(
                                     sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       cSchArvTm = as.POSIXct(strptime(
-                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchArvTm), 
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       cActDptTm = as.POSIXct(strptime(
-                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cActDptTm), 
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       cActArvTm = as.POSIXct(strptime(
-                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cSchDptTm), 
-                                    "%m/%d/%Y %H:%M:%S %p")),
+                                    sprintf("%s %s", summary.y13$tTrip, summary.y13$cActArvTm), 
+                                    "%m/%d/%Y %I:%M:%S %p")),
                       delay = cSchArvTm - cActArvTm)
 
-        as.POSIXct(strptime(
-              sprintf("%s %s", summary.y13$tTrip[1], summary.y13$cSchDptTm[1]), 
-              "%m/%d/%Y %H:%M:%S %p"))
+#        as.POSIXct(strptime(
+#sprintf("%s %s", summary.y13$tTrip[1], summary.y13$cSchDptTm[1]), 
+#              "%m/%d/%Y %H:%M:%S %p"))
            
-with(summary.y13, as.POSIXct(sprintf("%s %s", tTrip[1], cSchDptTm[1])))                
-for (i in 1:length(summary.y13$cSchDptTm)){
-  print(i)
-  as.POSIXct(summary.y13$cSchDptTm)
-}
+#with(summary.y13, as.POSIXct(sprintf("%s %s", tTrip[1], cSchDptTm[1])))                
+#for (i in 1:length(summary.y13$cSchDptTm)){
+#  print(i)
+#as.POSIXct(summary.y13$cSchDptTm)
+#}
 
 all.locations1.vec <- unique(summary.y13$ActualDepartureLocation)
 all.locations2.vec <- unique(summary.y13$ActualArrivalLocation)
 all.locations.vec <- union(all.locations1.vec, all.locations2.vec)
+
+
+
+#upper.t.target <- timestamp.target + 1
+#which(summary.y13$cSchArvTm > timestamp.target)
+#which(as.double(difftime(timestamp.target, summary.y13$cSchDptTm, units="mins") ) < 10)
+#time.mins.interval <- 100
+
+
+date.target <- c("10/22/2013")
+time.target <- c("9:00 AM") 
+timestamp.target <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %H:%M %p"))
+
+
+line.names.vec <- unique(summary.y13$Route)
+aaa <- data.table(ldply(line.names.vec, function(line.name){
+  target.df <- summary.y13[Route==line.name,]
+  indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) > 0) & 
+                    (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) < 0 ))
+  return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
+}))
+
+function(date.target, time.target)
+  
+date.target <- c("10/22/2013")
+time.target <- c("4:00 PM") 
+timestamp.target <- as.POSIXct(strptime(
+  sprintf("%s %s", date.target, time.target),  "%m/%d/%Y %I:%M %p"))
+
+
+line.names.vec <- unique(summary.y13$Route)
+aaa <- data.table(ldply(line.names.vec, function(line.name){
+  line.name <- c("Stoughton Branch")
+  target.df <- summary.y13[Route==line.name,]
+  indexes <- which( (as.double(difftime(timestamp.target, target.df$cSchDptTm, units="mins") ) >= 0) & 
+                      (as.double(difftime(timestamp.target, target.df$cSchArvTm, units="mins") ) <= 0 ))
+  return(data.frame(Route=line.name, n_passenger = sum(target.df$iPassenger[indexes]) ) )
+}))
+
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+
+
+
+
 
 
