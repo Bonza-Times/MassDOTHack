@@ -28,6 +28,14 @@ WHERE big_table.pair_id = pair_definitions.pair_id
 GROUP BY big_table.pair_id
 HAVING COUNT(big_table.pair_id) > 1;
 
+-- Remove duplicates
+DELETE FROM big_table WHERE pair_id IN
+(SELECT COUNT(pair_definitions.pair_id) 
+ FROM big_table,pair_definitions
+ WHERE big_table.pair_id = pair_definitions.pair_id
+ GROUP BY pair_definitions.pair_id
+ HAVING COUNT(pair_definitions.pair_id) > 1);
+
 -- Update big_table to include information in pair_definitions
 UPDATE big_table
 INNER JOIN pair_definitions
